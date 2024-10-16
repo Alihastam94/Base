@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract FavoriteRecords {
+
+    // State Variables
+    mapping(string => bool) public approvedRecords;  // Mapping of approved album names
+    mapping(address => mapping(string => bool)) public userFavorites;  // User favorites mapping
+
+    // List of approved albums
+    string[] private albumList = [
+        "Thriller", 
+        "Back in Black", 
+        "The Bodyguard", 
+        "The Dark Side of the Moon", 
+        "Their Greatest Hits (1971-1975)", 
+        "Hotel California", 
+        "Come On Over", 
+        "Rumours", 
+        "Saturday Night Fever"
+    ];
+
+    // Custom error for not approved albums
+    error NotApproved(string albumName);
+
+    // Constructor to load approved records
+    constructor() {
+        for (uint i = 0; i < albumList.length; i++) {
+            approvedRecords[albumList[i]] = true;
+        }
+    }
+
+    // Function to return the approved records
+    function getApprovedRecords() public view returns (string[] memory) {
+        return albumList;
+    }
+
+    // Function to add a record to user favorites
+    function addRecord(string memory albumName) public {
+        // Check if the album is approved
+        if (!approvedRecords[albumName]) {
+            revert NotApproved(albumName);  // Revert with a custom error if not approved
+        }
+
+        // Mark the album as a favorite for the sender
+        userFavorites[msg.sender][albumName] = true;
+    }
+
+    // Function to get the user's favorite albums
+    function getUserFavorites(address user) public view returns (string[] memory) {
+        // Count how many favorites the user has
+        uint count = 0;
+        for (uint i = 0; i < albumList.length; i++) {
+            if (userFavorites[user][albumList[i]]) {
+                count++;
+            }
+        }
+
+        // Create a dynamic array to store the favorite albums
+        string[] memory favorites = new string[](count);
+        uint j = 0;
+        for (uint i = 0; i < albumList.length; i++) {
+            if (userFavorites[user][albumList[i]]) {
+                favorites[j] = albumList[i];
+                j++;
+            }
+        }
+
+        return favorites;
+    }
+
+    // Function to reset user's favorites
+    function resetUserFavorites() public {
+        // Reset all favorite records for the caller
+        for (uint i = 0; i < albumList.length; i++) {
+            userFavorites[msg.sender][albumList[i]] = false;
+        }
+    }
+}
